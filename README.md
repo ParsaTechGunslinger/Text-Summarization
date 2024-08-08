@@ -39,22 +39,73 @@ This project provides a simple tool for summarizing text using Python's Natural 
 
 ## Usage
 
-1. **Run the Summarization Script**:
-   - Save the provided code in a file named, for example, `summarizer.py`.
-   - Open your terminal, navigate to the directory containing `summarizer.py`, and run:
-     ```bash
-     python summarizer.py
-     ```
+To use the summarization tool, follow these steps:
 
-2. **Input Text**:
-   - The script will prompt you to enter the text you want to summarize. You can either type the text directly or paste it.
+1. **Save the Code**:
+   - Create a file named `summarizer.py` and paste the following code into it:
 
-3. **View Summary**:
-   - After entering the text, the script will process it and print out a summary.
+   ```python
+   import nltk
+   import string
+   from heapq import nlargest
 
-## Example
+   # Ensure necessary NLTK data is downloaded
+   # nltk.download('stopwords')
+   # nltk.download('punkt')
 
-Suppose you input the following text:
+   def summarize_text(text):
+       # Determine the number of sentences for the summary
+       sentence_count = text.count(". ")
+       length = int(round(sentence_count / 10, 0)) if sentence_count > 20 else 1
+
+       # Remove punctuation from the text
+       nopuch = ''.join([char for char in text if char not in string.punctuation])
+
+       # Tokenize the text into words and remove stopwords
+       stopwords = set(nltk.corpus.stopwords.words('english'))
+       words = [word for word in nopuch.split() if word.lower() not in stopwords]
+
+       # Calculate word frequencies
+       word_freq = {}
+       for word in words:
+           if word not in word_freq:
+               word_freq[word] = 1
+           else:
+               word_freq[word] += 1
+
+       max_freq = max(word_freq.values())
+       for word in word_freq:
+           word_freq[word] /= max_freq
+
+       # Tokenize the text into sentences
+       sent_list = nltk.sent_tokenize(text)
+
+       # Score each sentence based on word frequencies
+       sent_score = {}
+       for sent in sent_list:
+           for word in nltk.word_tokenize(sent.lower()):
+               if word in word_freq:
+                   if sent not in sent_score:
+                       sent_score[sent] = word_freq[word]
+                   else:
+                       sent_score[sent] += word_freq[word]
+
+       # Select the top sentences to form the summary
+       summary_sents = nlargest(length, sent_score, key=sent_score.get)
+       summary = ' '.join(summary_sents)
+
+       return summary
+
+   # Get input from the user
+   user_text = input("Enter text to summarize: ")
+
+   # Summarize the text
+   summary = summarize_text(user_text)
+
+   # Print the summary
+   print("Summary:")
+   print(summary)
+
 
 ```text
 Artificial intelligence (AI) is intelligence demonstrated by machines, in contrast to the natural intelligence displayed by humans and animals. Leading AI textbooks define the field as the study of "intelligent agents": any device that perceives its environment and takes actions that maximize its chance of successfully achieving its goals.
